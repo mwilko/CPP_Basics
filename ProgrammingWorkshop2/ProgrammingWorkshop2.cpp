@@ -1,29 +1,41 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <sstream>
 #include <fstream>
+#include <map>
+#include <cctype>
 using namespace std;
 
-
 //task 2
-string word = "null (not been assigned)";
+string word;
 int count = 0;
 int numberOfWords = 0;
 string filename = "input.txt";
-vector<int> wordList; //adds word to vector if occured more than once?? keeps count??
-string fileContent;
+vector<string> wordList; //adds word to vector if occured more than once
+map<string, int> wordListMap;
 int numberOfSentences;
+string test;
+
+string RemovePunctuation(const string & word) 
+{
+    string newWord;
+    
+    for (char index : word) {
+        if (isalnum(index) || index == '\'') //remove punctuation
+        {
+            newWord += index;
+        }
+    }
+    return newWord;
+}
 
 int Sentences(string fileData)
 {
     bool character = false;
-    int counter = 0;
-
-    cout << fileData;
 
     for (char index : fileData)
     {
-        counter++;
         if (index == '.' || index == '!' || index == '?') {
             character = false; //is end sentence punctuation
         } else if (!character && !isspace(index)) {
@@ -34,39 +46,71 @@ int Sentences(string fileData)
 
         if (!character && (index == '.' || index == '!' || index == '?')) {
             numberOfSentences++;
-            cout << "LOGGED AS END SENTENCE: " << index << endl;
             character = true;
         }
-        cout << "Counter:" << counter << " Index: " << index << endl;
     }
-    cout << "Number of sentences: " << numberOfSentences << endl;
 }
+
 int NumberOfWords(string fileData)
 {
-    cout << 0;
-
-
+    for (char index : fileData)
+    {
+        if (isspace(index))
+        {
+            numberOfWords++;
+        }
+    }
+    
 }
-int WordFrequency(string fileData)
-{
-    cout << 0;
 
+void WordFrequency(const string & content,  vector<string> & words, vector<int> & frequencies) 
+{
+    std::istringstream iss(content);
+    std::string word;
+    while (iss >> word) {
+        std::string cleanedWord = RemovePunctuation(word);
+        
+        if (!cleanedWord.empty()) {
+            // Check if the word is already in the vector
+            auto it = std::find(words.begin(), words.end(), cleanedWord);
+            if (it != words.end()) {
+                // If the word is already in the vector, update its frequency
+                int index = std::distance(words.begin(), it);
+                frequencies[index]++;
+            } else {
+                // If the word is not in the vector, add it and set its frequency to 1
+                words.push_back(cleanedWord);
+                frequencies.push_back(1);
+            }
+        }
+    }
 }
 
 int main()
 {
-    ifstream ReadFile(filename);
-    while (getline(ReadFile, fileContent)) //writes file content to string
-    {
-        //cout << fileContent;
-        Sentences(fileContent);
+    ifstream ReadFile("input.txt");
+    if (!ReadFile) {
+        cerr << "Error opening the file." << endl; //cerr outputs to terminal
+        return 1;
     }
-    ReadFile.close();
+
+    string fileContent;
+    vector<string> words;
+    vector<int> frequencies;
+    string line;
+    while (getline(ReadFile, line)) {
+        fileContent += line + ' ';
+    }
+    
+    Sentences(fileContent);
+    NumberOfWords(fileContent);
+    cout << "number of sentences is " << numberOfSentences << endl;
+    cout << "number of words is " << numberOfWords << endl;
+    WordFrequency(fileContent, words, frequencies);
+
+    //displays all words and how many times occured
+    for (size_t index = 0; index < words.size(); ++index) {
+        cout << words[index] << "  " << frequencies[index] << endl;
+    }
 }
 
-// In this homework, you will implement a program that
-// generates a summary of a given document (this could be based on the work from Task 1).
-// The summary will include the number of sentences, the number of words, and the
-// frequency of each word in the document. For this purpose, you are required to use built-in
-// types, vectors/arrays, and control structures to implement this task. The use of functions is
-// encouraged. This task will be assessed during the workshop session.. 
